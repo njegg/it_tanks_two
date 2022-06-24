@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/it_tanks_two
+it_tanks_two.so
+it_tanks_two.dylib
+it_tanks_two.dll
+it_tanks_two.a
+it_tanks_two.lib
+it_tanks_two-test-*
+*.exe
+*.o
+*.obj
+*.lst

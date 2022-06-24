@@ -1,0 +1,13 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"bindbc-loader": "1.0.1",
+		"bindbc-raylib": "0.9.1",
+		"ddmp": "0.0.1-0.dev.3",
+		"dray": "4.0.0-r6",
+		"fluent-asserts": "0.13.3",
+		"libdparse": "0.14.0",
+		"raylib-d": "4.0.1",
+		"stdx-allocator": "2.77.5"
+	}
+}
