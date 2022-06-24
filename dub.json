@@ -4,9 +4,7 @@
 	],
 	"copyright": "Copyright © 2022, nj",
 	"dependencies": {
-		"bindbc-raylib": "~>0.9.1",
-		"dray": ">=4.0.0-r6 <4.1.0-0",
-		"raylib-d": "~>4.0.1"
+		"dray": ">=4.0.0-r6 <4.1.0-0"
 	},
 	"description": "1v1 3d tank shooter game",
 	"libs": [
