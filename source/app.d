@@ -41,9 +41,11 @@ void main()
 	while (!WindowShouldClose())
 	{
 		// Update
+		delta = GetFrameTime();
+
 		prevMousePosition = currMousePosition;
 		currMousePosition = GetMousePosition();
-		delta = GetFrameTime();
+
 		player.update(delta);
 		
 
