@@ -40,22 +40,23 @@ void main()
 
 	while (!WindowShouldClose())
 	{
+		// Update
+		prevMousePosition = currMousePosition;
+		currMousePosition = GetMousePosition();
 		delta = GetFrameTime();
 		player.update(delta);
 		
+
+		// Draw
 		BeginDrawing();
-
-			ClearBackground(Colors.WHITE);
-
-			BeginMode3D(player.playerCamera.camera);
+		ClearBackground(Colors.WHITE);
+		BeginMode3D(player.playerCamera.camera);
 
 				DrawPlane(Vector3Zero(), planeSize, Colors.GRAY);
-
+				
 				player.draw();
 
-
-			EndMode3D();
-
+		EndMode3D();
 		EndDrawing();
 	}
 
@@ -92,7 +93,6 @@ class Player
 		
 		this.playerCamera = new PlayerCamera(camera);
 	}
-
 
 	void update(float delta)
 	{
@@ -150,9 +150,6 @@ class PlayerCamera
 
 	void update(float delta)
 	{
-		prevMousePosition = currMousePosition;
-		currMousePosition = GetMousePosition();
-
 		float rotationAmount = currMousePosition.x - prevMousePosition.x;
 		Matrix rotationMatrix = MatrixRotateY(rotationAmount * delta);
 
