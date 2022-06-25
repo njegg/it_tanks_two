@@ -176,35 +176,6 @@ class Player
 
             landingPoint.position = Vector3Add(newPos, position);
             landingPoint.position.y = 0;
-            /*
-            Vector2 newPos;     // New landing point position 
-
-            // Vector from player to camera
-            newPos = Vector2Subtract(cameraXY, playerXY); 
-
-            // That vector inverted and normalised
-            newPos = Vector2Normalize(Vector2Negate(newPos));
-
-            // Scaling it based on hold time
-            newPos = Vector2Scale(newPos, shootHoldTime * barrelTiltSpeed);
-
-            // Adding it to player we get a point in front of player
-            // from cameras perspective 
-            newPos = Vector2Add(playerXY, newPos);
-            
-            // Starts in fron of the player
-            newPos.x += cos(cameraAngleRad()) * 4;
-            newPos.y += sin(cameraAngleRad()) * 4;
-
-            // Update to new pos only if the new pos is smaller than the limmit
-            if (Vector2Distance(playerXY, newPos) <= landingPoint.limit)
-            {
-                Vector3 newPosVec3 = { newPos.x, 0, newPos.y };
-                landingPoint.position = Vector3Lerp(landingPoint.position, newPosVec3, 0.1);
-            } else {
-                landingPoint.color = Colors.RED;
-            }
-            */
 		}
     }
 
