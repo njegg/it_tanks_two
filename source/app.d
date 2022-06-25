@@ -17,7 +17,14 @@ void main()
 
 	currMousePosition = GetMousePosition();
 
-	Vector2 planeSize = { 10.0f, 10.0f };
+	Vector2 planeSize = { 20.0f, 20.0f };
+	Mesh planeMesh = GenMeshPlane(32.0f, 32.0f, 8, 8);
+	Model planeModel = LoadModelFromMesh(planeMesh);
+
+	Texture2D grassTexture = LoadTexture("assets/grass.png");
+	SetMaterialTexture(&planeModel.materials[0], MATERIAL_MAP_DIFFUSE, grassTexture);
+	planeModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = grassTexture;
+	
 
 	DisableCursor();
 
@@ -37,7 +44,7 @@ void main()
 		ClearBackground(Colors.WHITE);
 		BeginMode3D(player.playerCamera.camera);
 
-				DrawPlane(Vector3Zero(), planeSize, Colors.GRAY);
+				DrawModel(planeModel, Vector3Zero(), 1, Colors.WHITE);
 				
 				player.draw();
 
@@ -45,7 +52,10 @@ void main()
 		EndDrawing();
 	}
 
-	EnableCursor();
+	UnloadModel(planeModel);
+	UnloadTexture(grassTexture);
 
 	unloadPlayer(player);
+
+	CloseWindow();
 }
