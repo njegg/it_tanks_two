@@ -150,14 +150,16 @@ class Player
             landingPoint.color = Colors.WHITE;
 
             landingPoint.visible = true;
+            landingPoint.shootByWaiting = false;
         }
-        else if (IsKeyReleased(controls.shoot)){
+        else if (IsKeyReleased(controls.shoot) && !landingPoint.shootByWaiting){
 			landingPoint.visible = false;
             shootHoldTime = 0;
             shoot();
 		}
 
-        /*  While holding shoot button, the landing point on the ground will show 
+        /*  
+         *  While holding shoot button, the landing point on the ground will show 
          *  where the bullet will fall will and the point will move on
          *  the ground forwards
          *  When button is released, the circle will disapear and the bullet will be
@@ -165,8 +167,33 @@ class Player
          */
 		if (IsKeyDown(controls.shoot))
 		{
+
+            if (shootHoldTime > landingPoint.maxHoldTime)
+            {
+                landingPoint.visible = false;
+                shootHoldTime = 0;
+                shoot();
+                landingPoint.shootByWaiting = true;
+            }
+
+            // New point is made like this:
+            //   - geting the distance to it
+            //   - adding some distance
+            //   - rotating a vector with that magnitude by
+            //     camera angle using Quaternion that rotates
+            //     it around y axis (yaw)
             float dist = Vector3Distance(landingPoint.position, position);
-            dist += barrelTiltSpeed;
+
+            if (dist < landingPoint.limit)
+            {
+                dist += barrelTiltSpeed;
+            }
+            else 
+            {
+                landingPoint.color = Colors.RED;
+                shootHoldTime += GetFrameTime();
+            }            
+
 
             Vector3 newPos = { dist, 0, 0 };
             newPos = Vector3RotateByQuaternion(
@@ -175,6 +202,10 @@ class Player
             );
 
             landingPoint.position = Vector3Add(newPos, position);
+            
+            // newPos = Vector3Add(newPos, position);
+            // landingPoint.position = Vector3Lerp(landingPoint.position, newPos, 0.1);
+
             landingPoint.position.y = 0;
 		}
     }
@@ -235,7 +266,9 @@ class LandingPoint
     Color color;
     bool visible;
     
-    float limit = 10.0f;
+    float limit = 16.0f;
+    float maxHoldTime = 2.0f;
+    bool shootByWaiting;
      
     this(Color color, Vector3 position)
     {
