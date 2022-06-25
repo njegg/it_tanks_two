@@ -32,3 +32,6 @@ it_tanks_two-test-*
 
 # Code coverage
 *.lst
+
+# VS Code
+.vscode/
