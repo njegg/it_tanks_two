@@ -104,7 +104,7 @@ class Player
 			rotationAmount *= playerCamera.mouseSensitivity;
 		}
 
-		Matrix rotationMatrix = MatrixRotateY(rotationAmount);
+		Matrix rotationMatrix = MatrixRotateY(rotationAmount * delta);
 
 		// rotate the distance to target 
 		playerCamera.relativePosition = Vector3Transform(playerCamera.relativePosition, rotationMatrix);
@@ -247,7 +247,7 @@ class PlayerCamera
 {
 	Camera3D camera;
 	Vector3 relativePosition;
-	float mouseSensitivity = 0.005;
+	float mouseSensitivity = 0.2;
 	float controllerSensitivity = 4;
 
 	this(Camera3D camera)
