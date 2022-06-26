@@ -7,6 +7,8 @@ import raylib;
 
 import utilm;
 import vars;
+import projectilem;
+
 
 Player loadPlayer(Color color, PlayerControls controls, Vector3 spawnPosition)
 {
@@ -33,6 +35,7 @@ void unloadPlayer(Player player)
 class Player
 {
 	Vector3 position;
+	Vector3 velocity;
 	Vector3 rotationalAxis = { y:1.0f };
 	float angle = 0;
 
@@ -43,12 +46,21 @@ class Player
 	int shouldMove = false;
 	int shouldRotate = false;
 
+	float jumpForce = 0.05f ;
+	bool isGrounded = false;
+
 	PlayerControls controls;
 	PlayerCamera playerCamera;
 	Model model;
 
+	int playerNumber;
+
+	BoundingBox hitbox;
+
     LandingPoint landingPoint;
     float shootHoldTime = 0;
+	Vector3 projectileSpawn = { 0.0f, 0.7f, 0.0f };
+
     Vector2 cameraXY, playerXY;             // Used for angle calculation
 
 	this(Model model, Vector3 position, PlayerControls controls)
@@ -75,19 +87,30 @@ class Player
         this.landingPoint = new LandingPoint(Colors.WHITE, this.position);
 	}
 
+
 	void update(float delta)
 	{
 		input();
 
 		// Moving
 		// shouldMove and should rotate can be (1 | -1 | 0)
-		this.position.x += shouldMove * sin(angle) * movementSpeed * delta;
-		this.position.z += shouldMove * cos(angle) * movementSpeed * delta;
+		position.x += shouldMove * sin(angle) * movementSpeed * delta;
+		position.z += shouldMove * cos(angle) * movementSpeed * delta;
+
+		velocity.y += gravity * (delta * delta);
+		position.y += velocity.y;
+		
+
+		// Will do for now
+		if (position.y <= 0.3) 
+		{
+			position.y = 0.3;
+			velocity.y = 0;
+			isGrounded = true;
+		}
 
 		angle += shouldRotate * rotationSpeed * delta;
-
 		fixAngleRad(&angle);
-
 
 		// Camera Update
 		playerCamera.camera.target = position;
@@ -119,6 +142,8 @@ class Player
 		float angleDeg = angle * RAD2DEG;
 		DrawModelEx(model, position, rotationalAxis, angleDeg, Vector3One(), Colors.WHITE);
 		DrawModelWiresEx(model, position, rotationalAxis, angleDeg, Vector3One(), Colors.BLACK);
+
+		DrawBoundingBox(hitbox, Colors.LIME);
 
         if (landingPoint.visible && isControling)
         {
@@ -183,7 +208,6 @@ class Player
          */
 		if (IsKeyDown(controls.shoot) || IsGamepadButtonDown(0, controls.shoot))
 		{
-
             if (shootHoldTime > landingPoint.maxHoldTime)
             {
                 landingPoint.visible = false;
@@ -224,6 +248,11 @@ class Player
 
             landingPoint.position.y = 0;
 		}
+		
+		if (isGrounded && IsKeyPressed(controls.jump))
+		{
+			jump();
+		}
     }
 
     float cameraAngleRad()
@@ -236,10 +265,24 @@ class Player
 
         return DEG2RAD * Vector2Angle(cameraXY, playerXY);
     }
- 
+
+	private void jump()
+	{
+		velocity.y += jumpForce;
+		isGrounded = false;
+	}
+
 	private void shoot()
 	{
-        writeln("shooting");
+		Projectile projectile = new Projectile(
+			playerNumber == 1 ? colorOneLight : colorTwoLight,
+			Vector3Add(position, projectileSpawn),
+			landingPoint.position,
+			0.5f
+		);
+		projectile.player = playerNumber;
+
+		projectiles.insertFront(projectile);
 	}
 }
 
@@ -264,6 +307,7 @@ class PlayerControls
 	int right;
 	int left;
 	int shoot;
+	int jump;
 	bool isGamepad;
 }
 

@@ -4,6 +4,7 @@ import std.conv;
 import std.stdio;
 
 
+import projectilem;
 import playerm;
 import vars;
 import utilm;
@@ -19,14 +20,17 @@ void main()
 	screenHeight = windowHeight;
 	screenWidth = windowWidth / 2;
 	
-	// creating players
+	// Creating players
+	
+	// Controls
 	PlayerControls controlsOne = new PlayerControls();
 	controlsOne.isGamepad = false;
 	controlsOne.forward = KeyboardKey.KEY_W;
 	controlsOne.backwards = KeyboardKey.KEY_S;
 	controlsOne.right = KeyboardKey.KEY_D;
 	controlsOne.left = KeyboardKey.KEY_A;
-	controlsOne.shoot = KeyboardKey.KEY_SPACE;
+	controlsOne.shoot = KeyboardKey.KEY_LEFT_SHIFT;
+	controlsOne.jump = KeyboardKey.KEY_SPACE;
 
 	PlayerControls controlsTwo = new PlayerControls();
 	controlsTwo.isGamepad = true;
@@ -40,11 +44,12 @@ void main()
 	Vector3 spawnPositionTwo = { -5.0f, 0.31f, 0.0f};
 
 	Player playerOne = loadPlayer(Colors.ORANGE, controlsOne, spawnPositionOne);
+	playerOne.playerNumber = 1;
 	Player playerTwo = loadPlayer(Colors.BLUE, controlsTwo, spawnPositionTwo);
+	playerTwo.playerNumber = 2;
 
 	// Making pixelated looking graphics
 	// Got it from an example from raylibs website
-
 	int screenWidthDownscaled = screenWidth / resolutionDownscale;
 	int screenHeightDownscaled = screenHeight / resolutionDownscale;
 
@@ -84,10 +89,16 @@ void main()
 	bool cursorEnabled = false;
 	DisableCursor();
 
+	double prevTime = GetTime();
+	double time;
+
 	while (!WindowShouldClose())
 	{
 		// Update
 		delta = GetFrameTime();
+		// time = GetTime();
+		// delta = time - prevTime;
+		// prevTime = time;
 
 		prevMousePosition = currMousePosition;
 		currMousePosition = GetMousePosition();
@@ -95,12 +106,16 @@ void main()
 		playerOne.update(delta);
 		playerTwo.update(delta);
 
+		updateProjectiles(delta);
+		updateExplosions(delta);
+
+
 		// Gonna use this as 'pause' for now
 		if (IsKeyPressed(KeyboardKey.KEY_C))
 		{
 			cursorEnabled = !cursorEnabled;
-			if (cursorEnabled) EnableCursor();
-			else 			   DisableCursor();
+			if (cursorEnabled) { EnableCursor(); SetTargetFPS(15); }
+			else 			   { DisableCursor(); SetTargetFPS(75); }
 		}
 
 
@@ -114,6 +129,9 @@ void main()
 				playerOne.draw(true);
 				playerTwo.draw(false);
 
+				drawProjectiles();
+				drawExplosions();
+
 			EndMode3D();
 		EndTextureMode();
 
@@ -126,6 +144,9 @@ void main()
 				playerOne.draw(false);
 				playerTwo.draw(true);
 
+				drawProjectiles();
+				drawExplosions();
+
 			EndMode3D();
 		EndTextureMode();
 
@@ -137,10 +158,7 @@ void main()
 
 			DrawTexturePro(playerOneScreen.texture, screenRect, screenRect2, screenOneCoords, 0, Colors.WHITE);
 			DrawTexturePro(playerTwoScreen.texture, screenRect, screenRect2, screenTwoCoords, 0, Colors.WHITE);
-
-			// DrawTextureRec(playerOneScreen.texture, screenRect, screenOneCoords, Colors.WHITE);
-			// DrawTextureRec(playerTwoScreen.texture, screenRect, screenTwoCoords, Colors.WHITE);
-
+		
 			sprintf(fps, "%i", GetFPS());
 			DrawText(fps, 10, 10, 30, Colors.YELLOW);
 
