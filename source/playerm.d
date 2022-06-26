@@ -8,29 +8,20 @@ import raylib;
 import utilm;
 import vars;
 
-Player loadPlayer()
+Player loadPlayer(Color color, PlayerControls controls, Vector3 spawnPosition)
 {
 	// creating a cube mesh and a texture made from a plain color image 
 	// then making a model from a mesh and adding a texture to it
-	Image image = GenImageColor(8, 8, Colors.ORANGE);
+	Image image = GenImageColor(8, 8, color);
 	Texture texture = LoadTextureFromImage(image);
- 	Mesh playerMesh = GenMeshCube(1.0f, 0.7f, 2.0f);
+ 	Mesh playerMesh = GenMeshCube(1.0f, 0.6, 2.0f);
 
 	UnloadImage(image);
 
 	Model playerModel = LoadModelFromMesh(playerMesh);
 	playerModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 	
-	Vector3 playerSpawn = { 0.0f, 0.5f, 0.0f };
-	
-	PlayerControls controls = new PlayerControls();
-	controls.forward = KeyboardKey.KEY_W;
-	controls.backwards = KeyboardKey.KEY_S;
-	controls.right = KeyboardKey.KEY_D;
-	controls.left = KeyboardKey.KEY_A;
-	controls.shoot = KeyboardKey.KEY_SPACE;
-
-	return new Player(playerModel, playerSpawn, controls);
+	return new Player(playerModel, spawnPosition, controls);
 }
 
 void unloadPlayer(Player player)
@@ -47,7 +38,7 @@ class Player
 
 	float movementSpeed = 2.0f;
 	float rotationSpeed = 2.0f;
-    float barrelTiltSpeed = 0.05f;
+    float barrelTiltSpeed = 0.04f;
 
 	int shouldMove = false;
 	int shouldRotate = false;
@@ -97,17 +88,39 @@ class Player
 
 		fixAngleRad(&angle);
 
+
+		// Camera Update
 		playerCamera.camera.target = position;
-		playerCamera.update(delta);
+
+		float rotationAmount = 0;
+		if (controls.isGamepad)
+		{
+			rotationAmount = GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_X);
+			rotationAmount *= playerCamera.controllerSensitivity;
+		}
+		else
+		{
+			rotationAmount = currMousePosition.x - prevMousePosition.x;
+			rotationAmount *= playerCamera.mouseSensitivity;
+		}
+
+		Matrix rotationMatrix = MatrixRotateY(rotationAmount);
+
+		// rotate the distance to target 
+		playerCamera.relativePosition = Vector3Transform(playerCamera.relativePosition, rotationMatrix);
+		// add rotated distance to target and set it to current possiton
+		playerCamera.camera.position = Vector3Add(playerCamera.camera.target, playerCamera.relativePosition);
+
+		UpdateCamera(&playerCamera.camera);
 	}
 
-	void draw()
+	void draw(bool isControling)
 	{
 		float angleDeg = angle * RAD2DEG;
 		DrawModelEx(model, position, rotationalAxis, angleDeg, Vector3One(), Colors.WHITE);
 		DrawModelWiresEx(model, position, rotationalAxis, angleDeg, Vector3One(), Colors.BLACK);
 
-        if (landingPoint.visible)
+        if (landingPoint.visible && isControling)
         {
             DrawSphere(landingPoint.position, 0.2f, landingPoint.color);
         }
@@ -117,29 +130,29 @@ class Player
 	{
 		shouldMove = 0;
 		shouldRotate = 0;
-		if (IsKeyDown(controls.backwards))
+		if (IsKeyDown(controls.backwards) || IsGamepadButtonDown(0, controls.backwards))
 		{
 			shouldMove = -1;
 		}
 
-		if (IsKeyDown(controls.forward))
+		if (IsKeyDown(controls.forward) || IsGamepadButtonDown(0, controls.forward))
 		{
 			shouldMove = 1;
 		}
 
-		if (IsKeyDown(controls.right))
+		if (IsKeyDown(controls.right) || IsGamepadButtonDown(0, controls.right))
 		{
 			shouldRotate = -1;
 		}
 
-		if (IsKeyDown(controls.left))
+		if (IsKeyDown(controls.left) || IsGamepadButtonDown(0, controls.left))
 		{
 			shouldRotate = 1;
 		}
 
         // Shooting
         // TODO: maybe put the logic in seperate function: aim()
-        if (IsKeyPressed(controls.shoot))
+        if (IsKeyPressed(controls.shoot) || IsGamepadButtonPressed(0, controls.shoot))
         {
             // spawining landing point in front of player where camera is looging
             landingPoint.position = position;
@@ -152,7 +165,10 @@ class Player
             landingPoint.visible = true;
             landingPoint.shootByWaiting = false;
         }
-        else if (IsKeyReleased(controls.shoot) && !landingPoint.shootByWaiting){
+        else if (
+			(IsKeyReleased(controls.shoot) || IsGamepadButtonReleased(0, controls.shoot)) 
+			&& !landingPoint.shootByWaiting)
+		{
 			landingPoint.visible = false;
             shootHoldTime = 0;
             shoot();
@@ -165,7 +181,7 @@ class Player
          *  When button is released, the circle will disapear and the bullet will be
          *  spawned and will follow the trajectory to the landing point
          */
-		if (IsKeyDown(controls.shoot))
+		if (IsKeyDown(controls.shoot) || IsGamepadButtonDown(0, controls.shoot))
 		{
 
             if (shootHoldTime > landingPoint.maxHoldTime)
@@ -184,6 +200,7 @@ class Player
             //     it around y axis (yaw)
             float dist = Vector3Distance(landingPoint.position, position);
 
+			// TODO: event when adding *delta, fps is afecting the amount
             if (dist < landingPoint.limit)
             {
                 dist += barrelTiltSpeed;
@@ -193,7 +210,6 @@ class Player
                 landingPoint.color = Colors.RED;
                 shootHoldTime += GetFrameTime();
             }            
-
 
             Vector3 newPos = { dist, 0, 0 };
             newPos = Vector3RotateByQuaternion(
@@ -230,24 +246,14 @@ class Player
 class PlayerCamera
 {
 	Camera3D camera;
-	float sensitivity = 0.2;
+	Vector3 relativePosition;
+	float mouseSensitivity = 0.005;
+	float controllerSensitivity = 4;
 
 	this(Camera3D camera)
 	{
 		this.camera = camera;
-	}
-
-	void update(float delta)
-	{
-		float rotationAmount = currMousePosition.x - prevMousePosition.x;
-		Matrix rotationMatrix = MatrixRotateY(rotationAmount * delta * sensitivity);
-
-		// rotate the distance to target 
-		cameraDistance = Vector3Transform(cameraDistance, rotationMatrix);
-		// add rotated distance to target and set it to current possiton
-		this.camera.position = Vector3Add(camera.target, cameraDistance);
-
-		UpdateCamera(&camera);
+		relativePosition = cameraDistance;
 	}
 }
 
@@ -258,6 +264,7 @@ class PlayerControls
 	int right;
 	int left;
 	int shoot;
+	bool isGamepad;
 }
 
 class LandingPoint
