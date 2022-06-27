@@ -9,8 +9,7 @@ import utilm;
 import vars;
 import projectilem;
 
-
-Player loadPlayer(Color color, PlayerControls controls, Vector3 spawnPosition)
+Player loadPlayer(int number, Color color, PlayerControls controls, Vector3 spawnPosition)
 {
 	// creating a cube mesh and a texture made from a plain color image 
 	// then making a model from a mesh and adding a texture to it
@@ -23,7 +22,7 @@ Player loadPlayer(Color color, PlayerControls controls, Vector3 spawnPosition)
 	Model playerModel = LoadModelFromMesh(playerMesh);
 	playerModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 	
-	return new Player(playerModel, spawnPosition, controls);
+	return new Player(number, playerModel, spawnPosition, controls);
 }
 
 void unloadPlayer(Player player)
@@ -63,10 +62,11 @@ class Player
 
     Vector2 cameraXY, playerXY;             // Used for angle calculation
 
-	this(Model model, Vector3 position, PlayerControls controls)
+	this(int number, Model model, Vector3 position, PlayerControls controls)
 	{
 		this.model = model;
 		this.controls = controls;
+		this.playerNumber = number;
 
 		this.position = position;
 
@@ -90,8 +90,6 @@ class Player
 
 	void update(float delta)
 	{
-		input();
-
 		// Moving
 		// shouldMove and should rotate can be (1 | -1 | 0)
 		position.x += shouldMove * sin(angle) * movementSpeed * delta;
@@ -151,7 +149,7 @@ class Player
         }
 	}
 
-	private void input()
+	void input()
 	{
 		shouldMove = 0;
 		shouldRotate = 0;
